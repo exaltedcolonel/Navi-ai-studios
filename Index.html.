@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10121b">
+<title>Navi AI Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0d0f17;color:#f5f4fc;font-family:system-ui,sans-serif}
+header{padding:22px;background:#171a28;border-bottom:1px solid #34344a}
+.logo{color:#b9a5ff;font-size:23px;font-weight:800;letter-spacing:2px}
+header p,.muted{color:#a6a7bb;font-size:13px}
+main{max-width:850px;margin:auto;padding:18px}
+h1{font-size:30px;margin-bottom:5px}
+nav{display:flex;gap:8px;overflow:auto;margin:20px 0}
+nav button{white-space:nowrap}
+button{border:0;border-radius:10px;padding:12px 15px;background:#302b49;color:white;font-weight:650}
+button.active,.primary{background:#b6a4ff;color:#171322}
+.card{background:#191d2b;border:1px solid #34394d;border-radius:16px;padding:17px;margin-bottom:14px}
+textarea,input,select{width:100%;background:#10131e;color:white;border:1px solid #42475d;border-radius:10px;padding:12px;margin:7px 0 15px;font:inherit}
+textarea{min-height:110px}
+label{font-size:13px;color:#d2ccef}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.panel{display:none}.panel.active{display:block}
+.tilegrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.tile{padding:16px;background:#252a3c;border-radius:12px}
+.tile strong{display:block;margin:5px 0}
+#preview{max-width:100%;max-height:280px;display:none;margin-top:12px;border-radius:10px}
+.project{border-top:1px solid #383b50;padding:12px 0;overflow-wrap:anywhere}
+footer{text-align:center;color:#85889d;padding:30px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">✦ NAVI AI STUDIO</div>
+ <p>Your private creative workspace</p>
+</header>
+<main>
+ <h1>Creative command center.</h1>
+ <p class="muted">Create. Transform. Animate. Explore.</p>
+
+ <div class="card">
+  <strong>Studio status</strong>
+  <p class="muted">Dashboard operational. AI generation engines are not connected yet.</p>
+ </div>
+
+ <nav>
+  <button class="active" onclick="tab('image',this)">✧ Images</button>
+  <button onclick="tab('edit',this)">◈ Photo Edit</button>
+  <button onclick="tab('video',this)">▣ Videos</button>
+  <button onclick="tab('projects',this)">▤ Projects</button>
+ </nav>
+
+ <section id="image" class="panel active">
+  <div class="card">
+   <h2>Image Lab</h2>
+   <label>Describe your image</label>
+   <textarea id="imagePrompt" placeholder="Describe the image you want to create..."></textarea>
+   <label>Image model</label>
+   <select id="imageModel">
+    <option>FLUX</option><option>SDXL</option>
+    <option>Other compatible model</option>
+   </select>
+   <label>Image format</label>
+   <select id="imageRatio">
+    <option>Portrait 2:3</option>
+    <option>Square 1:1</option>
+    <option>Landscape 16:9</option>
+    <option>Vertical 9:16</option>
+   </select>
+   <div class="actions">
+    <button class="primary" onclick="prepare('image')">Prepare generation</button>
+    <button onclick="save('Image')">Save prompt</button>
+   </div>
+   <p id="imageStatus" class="muted"></p>
+  </div>
+ </section>
+
+ <section id="edit" class="panel">
+  <div class="card">
+   <h2>Photo Editor</h2>
+   <p class="muted">Choose a photo to preview locally.</p>
+   <input type="file" accept="image/*" onchange="photo(event)">
+   <img id="preview" alt="Photo preview">
+   <label>What should be changed?</label>
+   <textarea id="editPrompt" placeholder="Remove objects, change backgrounds, restore or transform..."></textarea>
+   <button class="primary" onclick="prepare('edit')">Prepare editing job</button>
+   <p id="editStatus" class="muted"></p>
+  </div>
+  <div class="card">
+   <div class="tilegrid">
+    <div class="tile">✧<strong>Inpainting</strong><small>Replace image areas</small></div>
+    <div class="tile">◈<strong>Backgrounds</strong><small>Remove or replace</small></div>
+    <div class="tile">⬆<strong>Upscaling</strong><small>Improve resolution</small></div>
+    <div class="tile">✦<strong>Restoration</strong><small>Repair photographs</small></div>
+   </div>
+  </div>
+ </section>
+
+ <section id="video" class="panel">
+  <div class="card">
+   <h2>Video Lab</h2>
+   <label>Describe your video</label>
+   <textarea id="videoPrompt" placeholder="Describe the scene, movement, camera angles and atmosphere..."></textarea>
+   <label>Generation method</label>
+   <select id="videoMode">
+    <option>Text to video</option>
+    <option>Image to video</option>
+    <option>Video extension</option>
+   </select>
+   <label>Model family</label>
+   <select id="videoModel">
+    <option>Wan</option><option>LTX</option>
+    <option>Other compatible model</option>
+   </select>
+   <button class="primary" onclick="prepare('video')">Prepare video job</button>
+   <button onclick="save('Video')">Save prompt</button>
+   <p id="videoStatus" class="muted"></p>
+  </div>
+ </section>
+
+ <section id="projects" class="panel">
+  <div class="card">
+   <h2>My Creations</h2>
+   <p class="muted">Your saved prompts on this browser.</p>
+   <div id="projectList"></div>
+   <button onclick="exportProjects()">Export projects</button>
+   <button onclick="clearProjects()">Clear projects</button>
+  </div>
+ </section>
+</main>
+<footer>NAVI AI STUDIO · VERSION 1.0</footer>
+
+<script>
+function tab(id,button){
+ document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+ button.classList.add('active');
+}
+function photo(event){
+ const file=event.target.files[0];
+ if(!file)return;
+ if(!file.type.startsWith('image/'))return alert('Choose an image.');
+ const reader=new FileReader();
+ reader.onload=()=>{const p=document.getElementById('preview');p.src=reader.result;p.style.display='block'};
+ reader.readAsDataURL(file);
+}
+function prepare(type){
+ const prompt=document.getElementById(type==='image'?'imagePrompt':type==='video'?'videoPrompt':'editPrompt').value;
+ if(!prompt.trim())return alert('Enter a description first.');
+ document.getElementById(type+'Status').textContent=
+ 'Job prepared. An AI processing engine must be connected before generation can begin.';
+}
+function getSaved(){return JSON.parse(localStorage.getItem('naviProjects')||'[]')}
+function save(type){
+ const id=type==='Image'?'imagePrompt':'videoPrompt';
+ const prompt=document.getElementById(id).value;
+ if(!prompt.trim())return alert('Enter a prompt first.');
+ const items=getSaved();
+ items.unshift({type,prompt,date:new Date().toLocaleString()});
+ localStorage.setItem('naviProjects',JSON.stringify(items));
+ render();
+ alert('Prompt saved!');
+}
+function render(){
+ const box=document.getElementById('projectList');
+ box.innerHTML='';
+ getSaved().forEach(item=>{
+  const div=document.createElement('div');
+  div.className='project';
+  const title=document.createElement('strong');
+  title.textContent=item.type+' · '+item.date;
+  const text=document.createElement('p');
+  text.textContent=item.prompt;
+  div.append(title,text);box.append(div);
+ });
+ if(!box.children.length)box.textContent='No saved projects yet.';
+}
+function exportProjects(){
+ const blob=new Blob([JSON.stringify(getSaved(),null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+ a.download='navi-projects.json';a.click();URL.revokeObjectURL(a.href);
+}
+function clearProjects(){
+ if(confirm('Delete all saved projects?')){
+  localStorage.removeItem('naviProjects');render();
+ }
+}
+render();
+</script>
+</body>
+</html>
